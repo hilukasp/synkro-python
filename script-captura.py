@@ -38,7 +38,7 @@ def pegar_swap_rate():
     swap_rate = [psutil.swap_memory()]
     time.sleep(1)
     swap_rate.append(psutil.swap_memory())
-    sout_rate = getattr(swap_rate[1], "sin", 0)  # tratamento seguro
+    sout_rate = getattr(swap_rate[1], "sin", 0)
     sin_rate = getattr(swap_rate[1], "sin", 0)
     return [to_mb(sout_rate), to_mb(sin_rate), (to_mb(sout_rate) + to_mb(sin_rate))]
 
@@ -65,7 +65,7 @@ def pegar_iops_e_latencia():
     latencia_ms = round(total_ms / iops, 2) if iops > 0 else 0
     return [iops, readIOPS, writeIOPS, latencia_ms]
 
-# Dados CPU (Linux e Windows)
+# Dados CPU
 def pegar_dados_cpu():
     cpu_dados = psutil.cpu_times_percent(interval=0.1)
     cpu_idle = cpu_dados.idle
@@ -83,7 +83,7 @@ def montar_msg(dado, nomeDado, metrica, limite_barra, numDivisao):
     calculo_total_barras = int(limite_barra * (dado / numDivisao))
     return f"{nomeDado} [{'■' * calculo_total_barras}{' ' * (limite_barra - calculo_total_barras)}] {dado}{metrica}"
 
-# Carregamento
+# Carregamento visual
 def carregamento():
     for i in range(1, 101):
         sys.stdout.write("\r" + f"Carregando:  {i}%")
@@ -152,7 +152,13 @@ while True:
 
     # Armazena nos dados para CSV
     dados["timestamp"].append(trata_data)
-    dados["identificao-mainframe"].append(psutil.users()[0].name)
+
+    usuarios = psutil.users()
+    if usuarios:
+        dados["identificao-mainframe"].append(usuarios[0].name)
+    else:
+        dados["identificao-mainframe"].append("sem-usuario-logado")
+
     dados["uso_cpu_total_%"].append(dados_cpu[2])
     dados["uso_ram_total_%"].append(uso_ram_porcentagem)
     dados["swap_rate_mbs"].append(swap_rate[2])
@@ -195,4 +201,5 @@ while True:
     df.to_csv("dados-mainframe.csv", encoding="utf-8", sep=";", index=False)
 
     # Pequena pausa entre iterações
-    time.sleep(1)
+    time.sleep(3)
+    
