@@ -10,6 +10,7 @@ import os
 # Definir o fuso horário do Brasil
 fuso_horario_brasil = pytz.timezone('America/Sao_Paulo')
 username = os.environ.get('USER')
+userr='hideo'
 
 dados = {
     "timestamp": [],
@@ -76,7 +77,8 @@ def pegar_iops_e_latencia():
 def pegar_dados_cpu():
     # só com linux o io_wait
     cpu_dados = psutil.cpu_times_percent(interval=0.1)
-    cpu_iowait = cpu_dados.iowait
+    # cpu_iowait = cpu_dados.iowait
+    cpu_iowait=0.0
     cpu_idle = cpu_dados.idle
     cpu_uso_usuarios = cpu_dados.user
     cpu_uso_sistema = cpu_dados.system
@@ -138,7 +140,7 @@ while True:
     user_processos = pegar_processos()
 
     dados["timestamp"].append(trata_data)
-    dados["identificao-mainframe"].append(username)
+    dados["identificao-mainframe"].append(userr)
     dados["uso_cpu_total_%"].append(dados_cpu[2])
     dados["uso_ram_total_%"].append(uso_ram_porcentagem)
     dados["swap_rate_mbs"].append(swap_rate[2])
