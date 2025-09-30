@@ -9,16 +9,18 @@ lista_captura = []
 # Variáveis globais para cálculo de taxas
 ultimo_swap_usado = None
 ultimo_swap_time = None
+username = os.environ.get('USER')
 
 def montar_msg(dado, nomeDado, metrica, limite_barra, numDivisao):
     calculo_total_barras = int(limite_barra * (dado / numDivisao))
     return f"{nomeDado} [{'■' * calculo_total_barras}{' ' * (limite_barra - calculo_total_barras)}] {dado}{metrica}"
 
 def metricas():
-    global ultimo_swap_usado, ultimo_swap_time
+    global ultimo_swap_usado, ultimo_swap_time,username
 
     conversor_gigabyte = 1024**3
     conversor_megabyte = 1024**2
+ 
 
     ram = psutil.virtual_memory()
     sensor = psutil.sensors_temperatures() if hasattr(psutil, 'sensors_temperatures') else {}
@@ -89,12 +91,22 @@ def metricas():
 
     # Processos do usuário
     processos_usuario = []
-    for proc in psutil.process_iter(attrs=['pid', 'name', 'username']):
-        processos_usuario.append({
-            "pid": proc.info['pid'],
-            "nome": proc.info['name'],
-            "usuario": proc.info['username']
-        })
+    for proc in psutil.process_iter(attrs=["pid", "name", "cpu_percent", "memory_percent","username"]):
+   
+     if proc.info["username"] != username:
+       continue 
+     if proc.info["cpu_percent"] <= 0 and proc.info["memory_percent"] <= 0 :
+         continue
+     processos_usuario[1].memoria 
+     processos_usuario[1].cpu 
+
+     processos_usuario.append({
+       "pid": proc.info['pid'],
+       "nome": proc.info['name'],
+       "cpu_%": proc.info['cpu_percent'],
+       "Mem_%": proc.info['memory_percent'],
+       "usuario": proc.info['username']
+       })
 
     captura = {
         "CPU": {
