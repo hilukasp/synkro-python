@@ -6,13 +6,16 @@ import pytz #ajusta fuso horário
 import pyfiglet
 import sys
 import os
+from uuid import getnode as get_mac
 
 # Definir o fuso horário do Brasil
 fuso_horario_brasil = pytz.timezone('America/Sao_Paulo')
-username = os.environ.get('USER')
-userr='hideo'
+username = os.environ.get('USERNAME') or os.environ.get('USER') or os.getlogin()
+
+MacAdress = get_mac()
 
 dados = {
+    "macAdress":[],
     "timestamp": [],
     "identificao-mainframe":[],
     "uso_cpu_total_%":[], #dados_cpu
@@ -26,7 +29,7 @@ dados = {
     "disco_read_count":[], #pegar_iops_e_latencia
     "disco_write_count":[], #pegar_iops_e_latencia
     "disco_latencia_ms": [], #pegar_iops_e_latencia
-    "processos":[]
+    "processos":[]   
 }
 
 #Throughput de um disco só
@@ -140,7 +143,7 @@ while True:
     user_processos = pegar_processos()
 
     dados["timestamp"].append(trata_data)
-    dados["identificao-mainframe"].append(userr)
+    dados["identificao-mainframe"].append(username)
     dados["uso_cpu_total_%"].append(dados_cpu[2])
     dados["uso_ram_total_%"].append(uso_ram_porcentagem)
     dados["swap_rate_mbs"].append(swap_rate[2])
@@ -153,15 +156,17 @@ while True:
     dados["disco_write_count"].append(dados_disco[2])
     dados["disco_latencia_ms"].append(dados_disco[3])
     dados["processos"].append(user_processos)
+    dados["macAdress"].append(MacAdress)
 
     print(f"""
         +------------------------------------------------------------------------------+
 
         !--------IDENTIFICAÇÃO DO MAINFRAME---------!
-            {dados["identificao-mainframe"][len(dados["identificao-mainframe"])-1]}
+            User: {dados["identificao-mainframe"][len(dados["identificao-mainframe"])-1]}
+            Mac Adress: {MacAdress} 
         
         !---------------PROCESSOS-------------------!
-            {dados["processos"][len(dados["processos"])-1]}
+          Total de processos: {len(dados["processos"][-1])}
         !---------------DADOS DA CPU----------------!
             
             {montar_msg(dados["uso_cpu_total_%"][len(dados["uso_cpu_total_%"])-1], "Consumo da CPU", "%", 10, 100)}
