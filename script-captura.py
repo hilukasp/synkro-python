@@ -104,7 +104,9 @@ def pegar_processos():
             processos_usuario.append({
                 "pid": proc.info['pid'],
                 "nome": proc.info['name'],
-                "usuario": usuario_proc
+                "usuario": usuario_proc,
+                "cpu_%": proc.info['cpu_percent'],
+                "Mem_%": proc.info['memory_percent']
             })
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
