@@ -1,0 +1,294 @@
+#• Mineração de dados – padrões
+# objeto processo
+install.packages("jsonlite") 
+install.packages("dplyr")
+library(ggplot2)
+library(jsonlite)
+library(dplyr)
+
+dados.mainframe
+
+# Pegar o texto da coluna com os processos
+processos_txt <- dados.mainframe$processos
+#Substituir aspas simples por aspas duplas para formar JSON válido
+processos_txt_corrigido <- gsub("'", '"', processos_txt)
+#Converter para lista 
+
+#distribuicao<-sample(dados.mainframe,size = 500,replace = TRUE) comando para distribuir os dados com base em csv já existente
+
+
+################distribuindo dados######################
+
+# Garantir que timestamp é POSIXct (mantém tipo de data)
+ dados.mainframe$timestamp<-as.POSIXct(
+  dados.mainframe$timestamp,
+  format = "%d-%m-%Y %H:%M:%S",
+  tz = "America/Sao_Paulo"
+)
+
+# Número de novas linhas
+n_novas_linhas <- 1318
+
+# Amostra com reposição
+amostra <- dados.mainframe[sample(1:nrow(dados.mainframe), size = n_novas_linhas, replace = TRUE), ]
+
+# Ordenar
+amostra <- amostra[order(amostra$timestamp), ]
+
+# Criar timestamps novos variando de hora em hora
+ultimo_tempo <- max(dados.mainframe$timestamp)
+amostra$timestamp <- seq(from = ultimo_tempo + 3600, by = 3600, length.out = n_novas_linhas)
+
+# Juntar tudo
+janeiro <- rbind(dados.mainframe, amostra)
+
+#  formata a data sem o fuzo horário
+janeiro$timestamp<-format(janeiro$timestamp, "%d-%m-%Y %H:%M:%S")
+janeiro$timestamp
+
+fevereiro<- janeiro
+diferenca <- -0.069
+coluna = fevereiro$uso_cpu_total_.
+
+fevereiro$uso_cpu_total_. = (coluna + (coluna * diferenca ))
+coluna <- fevereiro$uso_ram_total_.
+fevereiro$uso_ram_total_. = (coluna + (coluna * diferenca ))
+coluna <- fevereiro$uso_disco_total_.
+fevereiro$uso_disco_total_. = (coluna + (coluna * diferenca))
+coluna <- fevereiro$tempo_cpu_ociosa
+fevereiro$tempo_cpu_ociosa = (coluna - (coluna * diferenca))
+coluna <- fevereiro$disco_read_count
+fevereiro$disco_read_count = (coluna + (coluna * diferenca))
+coluna <- fevereiro$disco_write_count
+fevereiro$disco_write_count = (coluna + (coluna * diferenca))
+coluna <- fevereiro$disco_throughput_mbs
+fevereiro$disco_throughput_mbs = (coluna + (coluna * diferenca))
+
+marco <- fevereiro
+diferenca <- 0.026
+coluna = marco$uso_cpu_total_.
+
+marco$uso_cpu_total_. = (coluna + (coluna * diferenca ))
+coluna <- marco$uso_ram_total_.
+marco$uso_ram_total_. = (coluna + (coluna * diferenca ))
+coluna <- marco$uso_disco_total_.
+marco$uso_disco_total_. = (coluna + (coluna * diferenca))
+coluna <- marco$tempo_cpu_ociosa
+marco$tempo_cpu_ociosa = (coluna - (coluna * diferenca))
+coluna <- marco$disco_read_count
+marco$disco_read_count = (coluna + (coluna * diferenca))
+coluna <- marco$disco_write_count
+marco$disco_write_count = (coluna + (coluna * diferenca))
+coluna <- marco$disco_throughput_mbs
+marco$disco_throughput_mbs = (coluna + (coluna * diferenca))
+
+abril <- marco
+diferenca <- 0.0436
+coluna = abril$uso_cpu_total_.
+
+abril$uso_cpu_total_. = (coluna + (coluna * diferenca ))
+coluna <- abril$uso_ram_total_.
+abril$uso_ram_total_. = (coluna + (coluna * diferenca ))
+coluna <- abril$uso_disco_total_.
+abril$uso_disco_total_. = (coluna + (coluna * diferenca))
+coluna <- abril$tempo_cpu_ociosa
+abril$tempo_cpu_ociosa = (coluna - (coluna * diferenca))
+coluna <- abril$disco_read_count
+abril$disco_read_count = (coluna + (coluna * diferenca))
+coluna <- abril$disco_write_count
+abril$disco_write_count = (coluna + (coluna * diferenca))
+coluna <- abril$disco_throughput_mbs
+abril$disco_throughput_mbs = (coluna + (coluna * diferenca))
+
+maio <- abril
+diferenca <- -0.0235
+coluna = maio$uso_cpu_total_.
+
+maio$uso_cpu_total_. = (coluna + (coluna * diferenca ))
+coluna <- maio$uso_ram_total_.
+maio$uso_ram_total_. = (coluna + (coluna * diferenca ))
+coluna <- maio$uso_disco_total_.
+maio$uso_disco_total_. = (coluna + (coluna * diferenca))
+coluna <- maio$tempo_cpu_ociosa
+maio$tempo_cpu_ociosa = (coluna - (coluna * diferenca))
+coluna <- maio$disco_read_count
+maio$disco_read_count = (coluna + (coluna * diferenca))
+coluna <- maio$disco_write_count
+maio$disco_write_count = (coluna + (coluna * diferenca))
+coluna <- maio$disco_throughput_mbs
+maio$disco_throughput_mbs = (coluna + (coluna * diferenca))
+
+junho <- maio
+diferenca <- -0.0853
+coluna = junho$uso_cpu_total_.
+
+junho$uso_cpu_total_. = (coluna + (coluna * diferenca ))
+coluna <- junho$uso_ram_total_.
+junho$uso_ram_total_. = (coluna + (coluna * diferenca ))
+coluna <- junho$uso_disco_total_.
+junho$uso_disco_total_. = (coluna + (coluna * diferenca))
+coluna <- junho$tempo_cpu_ociosa
+junho$tempo_cpu_ociosa = (coluna - (coluna * diferenca))
+coluna <- junho$disco_read_count
+junho$disco_read_count = (coluna + (coluna * diferenca))
+coluna <- junho$disco_write_count
+junho$disco_write_count = (coluna + (coluna * diferenca))
+coluna <- junho$disco_throughput_mbs
+junho$disco_throughput_mbs = (coluna + (coluna * diferenca))
+
+julho <- junho
+diferenca <- 0.0870
+coluna = julho$uso_cpu_total_.
+
+julho$uso_cpu_total_. = (coluna + (coluna * diferenca ))
+coluna <- julho$uso_ram_total_.
+julho$uso_ram_total_. = (coluna + (coluna * diferenca ))
+coluna <- julho$uso_disco_total_.
+julho$uso_disco_total_. = (coluna + (coluna * diferenca))
+coluna <- julho$tempo_cpu_ociosa
+julho$tempo_cpu_ociosa = (coluna - (coluna * diferenca))
+coluna <- julho$disco_read_count
+julho$disco_read_count = (coluna + (coluna * diferenca))
+coluna <- julho$disco_write_count
+julho$disco_write_count = (coluna + (coluna * diferenca))
+coluna <- julho$disco_throughput_mbs
+julho$disco_throughput_mbs = (coluna + (coluna * diferenca))
+
+agosto <- julho
+diferenca <- -0.0307
+coluna = agosto$uso_cpu_total_.
+
+agosto$uso_cpu_total_. = (coluna + (coluna * diferenca ))
+coluna <- agosto$uso_ram_total_.
+agosto$uso_ram_total_. = (coluna + (coluna * diferenca ))
+coluna <- agosto$uso_disco_total_.
+agosto$uso_disco_total_. = (coluna + (coluna * diferenca))
+coluna <- agosto$tempo_cpu_ociosa
+agosto$tempo_cpu_ociosa = (coluna - (coluna * diferenca))
+coluna <- agosto$disco_read_count
+agosto$disco_read_count = (coluna + (coluna * diferenca))
+coluna <- agosto$disco_write_count
+agosto$disco_write_count = (coluna + (coluna * diferenca))
+coluna <- agosto$disco_throughput_mbs
+agosto$disco_throughput_mbs = (coluna + (coluna * diferenca))
+
+setembro <- agosto
+diferenca <- -0.0215
+coluna = setembro$uso_cpu_total_.
+
+setembro$uso_cpu_total_. = (coluna + (coluna * diferenca ))
+coluna <- setembro$uso_ram_total_.
+setembro$uso_ram_total_. = (coluna + (coluna * diferenca ))
+coluna <- setembro$uso_disco_total_.
+setembro$uso_disco_total_. = (coluna + (coluna * diferenca))
+coluna <- setembro$tempo_cpu_ociosa
+setembro$tempo_cpu_ociosa = (coluna - (coluna * diferenca))
+coluna <- setembro$disco_read_count
+setembro$disco_read_count = (coluna + (coluna * diferenca))
+coluna <- setembro$disco_write_count
+setembro$disco_write_count = (coluna + (coluna * diferenca))
+coluna <- setembro$disco_throughput_mbs
+setembro$disco_throughput_mbs = (coluna + (coluna * diferenca))
+
+outubro <- setembro
+diferenca <- 0.0355
+coluna = outubro$uso_cpu_total_.
+
+outubro$uso_cpu_total_. = (coluna + (coluna * diferenca ))
+coluna <- outubro$uso_ram_total_.
+outubro$uso_ram_total_. = (coluna + (coluna * diferenca ))
+coluna <- outubro$uso_disco_total_.
+outubro$uso_disco_total_. = (coluna + (coluna * diferenca))
+coluna <- outubro$tempo_cpu_ociosa
+outubro$tempo_cpu_ociosa = (coluna - (coluna * diferenca))
+coluna <- outubro$disco_read_count
+outubro$disco_read_count = (coluna + (coluna * diferenca))
+coluna <- outubro$disco_write_count
+outubro$disco_write_count = (coluna + (coluna * diferenca))
+coluna <- outubro$disco_throughput_mbs
+outubro$disco_throughput_mbs = (coluna + (coluna * diferenca))
+
+novembro <- outubro
+diferenca <- -0.0422
+coluna = novembro$uso_cpu_total_.
+
+novembro$uso_cpu_total_. = (coluna + (coluna * diferenca ))
+coluna <- novembro$uso_ram_total_.
+novembro$uso_ram_total_. = (coluna + (coluna * diferenca ))
+coluna <- novembro$uso_disco_total_.
+novembro$uso_disco_total_. = (coluna + (coluna * diferenca))
+coluna <- novembro$tempo_cpu_ociosa
+novembro$tempo_cpu_ociosa = (coluna - (coluna * diferenca))
+coluna <- novembro$disco_read_count
+novembro$disco_read_count = (coluna + (coluna * diferenca))
+coluna <- novembro$disco_write_count
+novembro$disco_write_count = (coluna + (coluna * diferenca))
+coluna <- novembro$disco_throughput_mbs
+novembro$disco_throughput_mbs = (coluna + (coluna * diferenca))
+
+dezembro <- novembro
+diferenca <- 0.1409
+coluna = dezembro$uso_cpu_total_.
+
+dezembro$uso_cpu_total_. = (coluna + (coluna * diferenca ))
+coluna <- dezembro$uso_ram_total_.
+dezembro$uso_ram_total_. = (coluna + (coluna * diferenca ))
+coluna <- dezembro$uso_disco_total_.
+dezembro$uso_disco_total_. = (coluna + (coluna * diferenca))
+coluna <- dezembro$tempo_cpu_ociosa
+dezembro$tempo_cpu_ociosa = (coluna - (coluna * diferenca))
+coluna <- dezembro$disco_read_count
+dezembro$disco_read_count = (coluna + (coluna * diferenca))
+coluna <- dezembro$disco_write_count
+dezembro$disco_write_count = (coluna + (coluna * diferenca))
+coluna <- dezembro$disco_throughput_mbs
+dezembro$disco_throughput_mbs = (coluna + (coluna * diferenca))
+
+ano <- bind_rows(janeiro,fevereiro,marco,abril,maio,junho,julho,agosto,setembro,outubro,novembro,dezembro)
+
+ano$mes <- factor(c(rep("Janeiro", nrow(janeiro)),
+                    rep("Fevereiro", nrow(fevereiro)),
+                    rep("Março", nrow(marco)),
+                    rep("Abril", nrow(abril)),
+                    rep("Maio", nrow(maio)),
+                    rep("Junho", nrow(junho)),
+                    rep("Julho", nrow(julho)),
+                    rep("Agosto", nrow(agosto)),
+                    rep("Setembro", nrow(setembro)),
+                    rep("Outubro", nrow(outubro)),
+                    rep("Novembro", nrow(novembro)),
+                    rep("Dezembro", nrow(dezembro))),
+                  levels = c("Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                             "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"))
+
+
+resumo <- ano %>%
+  group_by(mes) %>%
+  summarise(media_cpu = mean(uso_cpu_total_., na.rm = TRUE))
+
+ggplot(resumo, aes(x = mes, y = media_cpu, group = 1)) +
+  geom_line(color = "steelblue", linewidth = 1.2) +
+  geom_point(size = 3, color = "darkblue") +
+  labs(title = "Uso médio de CPU por mês",
+       x = "Mês", y = "Uso médio de CPU (%)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+#• Gráfico/Dashboard/Ranking
+
+#• Definição das métricas (Dimensões)
+
+#• Definição de Alertas
+#>90% processador <5%
+#>85% memoria
+#>90% usodisco 
+#>rankeando os maiores processos
+#>cpu tempo
+#>hist cpu, 
+#hist ram,
+#processos q mais gastam recursos, 
+#media uso recurso por dia\mês\ano?
+#fazer uma curva linear de previsão de gasto de recurso. 
+#tentar prever perdas conforme documentação. 
+#processos que estão aumentando ou diminuindo seu uso com o tempo? 
+  
