@@ -228,8 +228,8 @@ while True:
     throughput = pegar_throughput()
     dados_disco.append(throughput)
     
-    #user_processos = pegar_processos()
-    user_processos = pegar_processos_top10()
+    user_processos = pegar_processos()
+    #user_processos = pegar_processos_top10()
 
     dados["timestamp"].append(trata_data)
     dados["identificao-mainframe"].append(username)
