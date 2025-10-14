@@ -32,8 +32,8 @@ dados = {
     "disco_iops_total": [],
     "disco_read_count": [],
     "disco_write_count": [],
-    "disco_latencia_ms": [],
-    "processos": []
+    "disco_latencia_ms": []
+    # "processos": []
 }
 
 def to_mb(x):
@@ -98,6 +98,7 @@ def pegar_processos():
                 usuario_proc = usuario_proc.split("\\")[-1]
 
             if usuario_proc != usuario_atual:
+                
                 continue
 
             cpu = proc.cpu_percent(interval=0.0)
@@ -160,7 +161,7 @@ while True:
     throughput = pegar_throughput()
     dados_disco.append(throughput)
     
-    user_processos = pegar_processos()
+    # user_processos = pegar_processos()
     #user_processos = pegar_processos_top10()
 
     dados["timestamp"].append(trata_data)
@@ -176,7 +177,7 @@ while True:
     dados["disco_read_count"].append(dados_disco[1])
     dados["disco_write_count"].append(dados_disco[2])
     dados["disco_latencia_ms"].append(dados_disco[3])
-    dados["processos"].append(user_processos)
+    # dados["processos"].append(user_processos)
     
     dados["macAdress"].append(MacAdress)
 
@@ -186,10 +187,7 @@ while True:
 !--------IDENTIFICAÇÃO DO MAINFRAME---------!
     User: {dados["identificao-mainframe"][-1]}
     Mac Adress: {MacAdress}
-
-!---------------PROCESSOS-------------------!
-  Total de processos: {len(dados["processos"][-1])}
-
+ 
 !---------------DADOS DA CPU----------------!
     {montar_msg(dados["uso_cpu_total_%"][-1], "Consumo da CPU", "%", 10, 100)}
     {montar_msg(dados["tempo_cpu_ociosa"][-1], "Tempo de CPU Ociosa", "s", 10, 100)}

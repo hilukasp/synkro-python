@@ -19,22 +19,33 @@ MacAdress = get_mac()
 def pegar_processos_novo():
     linhas = []
     ts = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-     
+    
+    #inicializa a medição
+    for p in psutil.process_iter():
+        p.cpu_percent(interval=None)
+
+    total_cores = psutil.cpu_count(logical=True)
     processos = []
-    for proc in psutil.process_iter(attrs=["pid", "name", "cpu_percent", "memory_percent", "username"]):
+    for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
         try:
+            cpu = proc.cpu_percent(interval=None)
+            print(cpu)
+            #o proc.cpu_percent pega a porcentagem com base em um núcleo só, mas não pelo total de núcleos
+            mem = proc.memory_percent()
+
             processos.append({
                 "pid": proc.info["pid"],
                 "nome": proc.info["name"],
-                "usuario": proc.info["username"],
-                "cpu_%": round(proc.info["cpu_percent"], 2),
-                "mem_%": round(proc.info["memory_percent"], 2)
-            }) 
+                # "usuario": proc.info["username"],
+                "cpu_%": round(cpu, 2),
+                "mem_%": round(mem, 2)
+            })  
+             
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
 
     #ordena pelo uso de memória descrescente
-    processos.sort(key=lambda x: x["mem_%"], reverse=True)
+    processos.sort(key=lambda x: x["cpu_%"], reverse=True)
 
     col_n = 10
     
@@ -48,7 +59,7 @@ def pegar_processos_novo():
     for i in range(1, col_n + 1):
         colunas.append(f"pid{i}")
         colunas.append(f"nome{i}")
-        colunas.append(f"usuario{i}")
+        # colunas.append(f"usuario{i}")
         colunas.append(f"cpu_%{i}")
         colunas.append(f"mem_%{i}")
     
@@ -57,7 +68,7 @@ def pegar_processos_novo():
     for proc in top_processos:
         linha.append(proc["pid"])
         linha.append(proc["nome"])
-        linha.append(proc["usuario"])
+        # linha.append(proc["usuario"])
         linha.append(proc["cpu_%"])
         linha.append(proc["mem_%"])
 
@@ -70,8 +81,9 @@ def pegar_processos_novo():
         colunas = ["timestamp", "macAdress", "Identificação-Mainframe"]
         col_n = 10
         for i in range(1, col_n + 1):
-            colunas += [f"pid{i}", f"nome{i}", f"usuario{i}", f"cpu_%{i}", f"mem_%{i}"]
+            colunas += [f"pid{i}", f"nome{i}", f"cpu_%{i}", f"mem_%{i}"]
         pd.DataFrame(columns=colunas).to_csv(processo, index=False, encoding="utf-8", sep=";")
+    
 
     df = pd.DataFrame(linhas, columns=colunas)
     df.to_csv(processo, index=False, encoding="utf-8",sep=";",mode='a',header=False )
@@ -90,11 +102,6 @@ print(f"HORÁRIO AGORA = {datetime.now().strftime('%d/%m/%Y %H:%M')}")
 print(pyfiglet.figlet_format("INICIANDO..."))
 carregamento()
 
-while True:
-    horario_agora = datetime.now()
-    trata_data = horario_agora.strftime("%d-%m-%Y %H:%M:%S")
-  
-    pegar_processos_novo() 
-    # user_processos = pegar_processos_top10()
 
- 
+while True: 
+    pegar_processos_novo() 

@@ -98,11 +98,12 @@ def pegar_processos():
                 usuario_proc = usuario_proc.split("\\")[-1]
 
             if usuario_proc != usuario_atual:
+                
                 continue
 
-            cpu = proc.cpu_percent(interval=0.1)
+            cpu = proc.cpu_percent(interval=0.0)
             mem = proc.memory_percent()
-            if cpu <= 0.01 and mem <= 0.01:#se for menor que 0.01%
+            if cpu <= 1.0 and mem <= 1.0:#se for menor que 0.01%
                 continue
             
             nome = proc.info['name']
