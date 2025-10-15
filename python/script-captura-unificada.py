@@ -85,18 +85,18 @@ def uso_disco():
 async def pegar_processos_novo():
     linhas = []
     ts = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-     
+    
     processos = []
-    for proc in psutil.process_iter(attrs=["pid", "name", "cpu_percent", "memory_percent", "username"]):
-        try:
-            cpu = proc.cpu_percent(interval=0.0)
+    #agrupa por nome
+    for proc in psutil.process_iter(["name"]):
+        try:  
             mem = proc.memory_percent()
+            tempos_cpu = proc.cpu_times() 
+            total_cpu = tempos_cpu.user + tempos_cpu.system
 
-            processos.append({
-                "pid": proc.info["pid"],
-                "nome": proc.info["name"],
-                "usuario": proc.info["username"],
-                "cpu_%": round(cpu, 2),
+            processos.append({ 
+                "nome": proc.info["name"], 
+                "cpu_%": round(total_cpu, 2),
                 "mem_%": round(mem, 2)
             })  
              
@@ -104,7 +104,7 @@ async def pegar_processos_novo():
             continue
 
     #ordena pelo uso de memória descrescente
-    processos.sort(key=lambda x: x["mem_%"], reverse=True)
+    processos.sort(key=lambda x: x["cpu_%"], reverse=True)
 
     col_n = 10
     
@@ -116,18 +116,18 @@ async def pegar_processos_novo():
     colunas = ["timestamp","macAdress","Identificação-Mainframe"]
     #for de 1 até 10'
     for i in range(1, col_n + 1):
-        colunas.append(f"pid{i}")
+        # colunas.append(f"pid{i}")
         colunas.append(f"nome{i}")
-        colunas.append(f"usuario{i}")
+        # colunas.append(f"usuario{i}")
         colunas.append(f"cpu_%{i}")
         colunas.append(f"mem_%{i}")
     
     #cria linhas
     linha = [ts,MacAdress,username]
     for proc in top_processos:
-        linha.append(proc["pid"])
+        # linha.append(proc["pid"])
         linha.append(proc["nome"])
-        linha.append(proc["usuario"])
+        # linha.append(proc["usuario"])
         linha.append(proc["cpu_%"])
         linha.append(proc["mem_%"])
 
@@ -140,13 +140,13 @@ async def pegar_processos_novo():
         colunas = ["timestamp", "macAdress", "Identificação-Mainframe"]
         col_n = 10
         for i in range(1, col_n + 1):
-            colunas += [f"pid{i}", f"nome{i}", f"usuario{i}", f"cpu_%{i}", f"mem_%{i}"]
+            colunas += [ f"nome{i}", f"cpu_%{i}", f"mem_%{i}"]
         pd.DataFrame(columns=colunas).to_csv(processo, index=False, encoding="utf-8", sep=";")
     
 
     df = pd.DataFrame(linhas, columns=colunas)
-    df.to_csv(processo, index=False, encoding="utf-8",sep=";",mode='a',header=False ) 
-
+    df.to_csv(processo, index=False, encoding="utf-8",sep=";",mode='a',header=False )
+  
 def montar_msg(dado, nomeDado, metrica, limite_barra, numDivisao):
     calculo_total_barras = int(limite_barra * (dado / numDivisao))
     return f"{nomeDado} [{'■' * calculo_total_barras}{' ' * (limite_barra - calculo_total_barras)}] {dado}{metrica}"
@@ -162,6 +162,7 @@ def carregamento():
 async def rodando():
     print(f"HORÁRIO AGORA = {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     print(pyfiglet.figlet_format("INICIANDO..."))
+
     carregamento()
  
     while True:
@@ -190,7 +191,7 @@ async def rodando():
         dados["disco_read_count"].append(dados_disco[1])
         dados["disco_write_count"].append(dados_disco[2])
         dados["disco_latencia_ms"].append(dados_disco[3]) 
-        
+
         dados["macAdress"].append(MacAdress)
 
         print(f"""
@@ -217,10 +218,11 @@ async def rodando():
         {montar_msg(dados["disco_write_count"][-1], "Dados escritos no DASD", "qtd", 10, 100)}
         {montar_msg(dados["disco_latencia_ms"][-1], "Latência do DASD", "ms", 10, 1000)}
     """)
+        await pegar_processos_novo()
 
         df = pd.DataFrame(dados)
         df.to_csv("dados-mainframe2.csv", encoding="utf-8", sep=";", index=False)
-        await pegar_processos_novo()
+        
     
     #comando AWS
     # csv_buffer = StringIO() #dependencia, em vez do csv carregar na máquina ele armazena temporariamente na pasta do projeto

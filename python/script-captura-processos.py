@@ -20,24 +20,18 @@ def pegar_processos_novo():
     linhas = []
     ts = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     
-    #inicializa a medição
-    for p in psutil.process_iter():
-        p.cpu_percent(interval=None)
-
-    total_cores = psutil.cpu_count(logical=True)
     processos = []
-    for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
-        try:
-            cpu = proc.cpu_percent(interval=None)
-            print(cpu)
-            #o proc.cpu_percent pega a porcentagem com base em um núcleo só, mas não pelo total de núcleos
+    #agrupa por nome
+    for proc in psutil.process_iter(["name"]):
+        try:  
             mem = proc.memory_percent()
+            tempos_cpu = proc.cpu_times() 
+            total_cpu = tempos_cpu.user + tempos_cpu.system
 
-            processos.append({
-                "pid": proc.info["pid"],
+            processos.append({ 
                 "nome": proc.info["name"],
                 # "usuario": proc.info["username"],
-                "cpu_%": round(cpu, 2),
+                "cpu_%": round(total_cpu, 2),
                 "mem_%": round(mem, 2)
             })  
              
@@ -57,7 +51,7 @@ def pegar_processos_novo():
     colunas = ["timestamp","macAdress","Identificação-Mainframe"]
     #for de 1 até 10'
     for i in range(1, col_n + 1):
-        colunas.append(f"pid{i}")
+        # colunas.append(f"pid{i}")
         colunas.append(f"nome{i}")
         # colunas.append(f"usuario{i}")
         colunas.append(f"cpu_%{i}")
@@ -66,7 +60,7 @@ def pegar_processos_novo():
     #cria linhas
     linha = [ts,MacAdress,username]
     for proc in top_processos:
-        linha.append(proc["pid"])
+        # linha.append(proc["pid"])
         linha.append(proc["nome"])
         # linha.append(proc["usuario"])
         linha.append(proc["cpu_%"])
@@ -81,7 +75,7 @@ def pegar_processos_novo():
         colunas = ["timestamp", "macAdress", "Identificação-Mainframe"]
         col_n = 10
         for i in range(1, col_n + 1):
-            colunas += [f"pid{i}", f"nome{i}", f"cpu_%{i}", f"mem_%{i}"]
+            colunas += [ f"nome{i}", f"cpu_%{i}", f"mem_%{i}"]
         pd.DataFrame(columns=colunas).to_csv(processo, index=False, encoding="utf-8", sep=";")
     
 
