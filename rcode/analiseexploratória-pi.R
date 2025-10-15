@@ -2,6 +2,8 @@
 # objeto processo
 install.packages("jsonlite") 
 install.packages("dplyr")
+install.packages("reshape2")
+library(reshape2)
 library(ggplot2)
 library(jsonlite)
 library(dplyr)
@@ -46,8 +48,24 @@ janeiro <- rbind(dados.mainframe, amostra)
 janeiro$timestamp<-format(janeiro$timestamp, "%d-%m-%Y %H:%M:%S")
 janeiro$timestamp
 
+# Simulaçao regra de negocio
+perc_fev <- -0.069
+perc_mar <-  0.026
+perc_abr <- 0.0436
+perc_mai <- -0.0235
+perc_jun <- -0.0853
+perc_jul <- 0.0870
+perc_ago <- -0.0307
+perc_set <- -0.0215
+perc_out <- 0.0235
+perc_nov <- -0.0422
+perc_dez <- 0.1409
+
+
+
+
 fevereiro<- janeiro
-diferenca <- -0.069
+diferenca <- perc_fev
 coluna = fevereiro$uso_cpu_total_.
 
 fevereiro$uso_cpu_total_. = (coluna + (coluna * diferenca ))
@@ -65,7 +83,7 @@ coluna <- fevereiro$disco_throughput_mbs
 fevereiro$disco_throughput_mbs = (coluna + (coluna * diferenca))
 
 marco <- fevereiro
-diferenca <- 0.026
+diferenca <- perc_mar
 coluna = marco$uso_cpu_total_.
 
 marco$uso_cpu_total_. = (coluna + (coluna * diferenca ))
@@ -83,7 +101,7 @@ coluna <- marco$disco_throughput_mbs
 marco$disco_throughput_mbs = (coluna + (coluna * diferenca))
 
 abril <- marco
-diferenca <- 0.0436
+diferenca <- perc_abr
 coluna = abril$uso_cpu_total_.
 
 abril$uso_cpu_total_. = (coluna + (coluna * diferenca ))
@@ -101,7 +119,7 @@ coluna <- abril$disco_throughput_mbs
 abril$disco_throughput_mbs = (coluna + (coluna * diferenca))
 
 maio <- abril
-diferenca <- -0.0235
+diferenca <- perc_mai
 coluna = maio$uso_cpu_total_.
 
 maio$uso_cpu_total_. = (coluna + (coluna * diferenca ))
@@ -119,7 +137,7 @@ coluna <- maio$disco_throughput_mbs
 maio$disco_throughput_mbs = (coluna + (coluna * diferenca))
 
 junho <- maio
-diferenca <- -0.0853
+diferenca <- perc_jun
 coluna = junho$uso_cpu_total_.
 
 junho$uso_cpu_total_. = (coluna + (coluna * diferenca ))
@@ -137,7 +155,7 @@ coluna <- junho$disco_throughput_mbs
 junho$disco_throughput_mbs = (coluna + (coluna * diferenca))
 
 julho <- junho
-diferenca <- 0.0870
+diferenca <- perc_jul
 coluna = julho$uso_cpu_total_.
 
 julho$uso_cpu_total_. = (coluna + (coluna * diferenca ))
@@ -155,7 +173,7 @@ coluna <- julho$disco_throughput_mbs
 julho$disco_throughput_mbs = (coluna + (coluna * diferenca))
 
 agosto <- julho
-diferenca <- -0.0307
+diferenca <- perc_ago
 coluna = agosto$uso_cpu_total_.
 
 agosto$uso_cpu_total_. = (coluna + (coluna * diferenca ))
@@ -173,7 +191,7 @@ coluna <- agosto$disco_throughput_mbs
 agosto$disco_throughput_mbs = (coluna + (coluna * diferenca))
 
 setembro <- agosto
-diferenca <- -0.0215
+diferenca <- perc_set
 coluna = setembro$uso_cpu_total_.
 
 setembro$uso_cpu_total_. = (coluna + (coluna * diferenca ))
@@ -191,7 +209,7 @@ coluna <- setembro$disco_throughput_mbs
 setembro$disco_throughput_mbs = (coluna + (coluna * diferenca))
 
 outubro <- setembro
-diferenca <- 0.0355
+diferenca <- perc_out
 coluna = outubro$uso_cpu_total_.
 
 outubro$uso_cpu_total_. = (coluna + (coluna * diferenca ))
@@ -209,7 +227,7 @@ coluna <- outubro$disco_throughput_mbs
 outubro$disco_throughput_mbs = (coluna + (coluna * diferenca))
 
 novembro <- outubro
-diferenca <- -0.0422
+diferenca <- perc_nov
 coluna = novembro$uso_cpu_total_.
 
 novembro$uso_cpu_total_. = (coluna + (coluna * diferenca ))
@@ -227,7 +245,7 @@ coluna <- novembro$disco_throughput_mbs
 novembro$disco_throughput_mbs = (coluna + (coluna * diferenca))
 
 dezembro <- novembro
-diferenca <- 0.1409
+diferenca <- perc_dez
 coluna = dezembro$uso_cpu_total_.
 
 dezembro$uso_cpu_total_. = (coluna + (coluna * diferenca ))
@@ -274,21 +292,54 @@ ggplot(resumo, aes(x = mes, y = media_cpu, group = 1)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-#• Gráfico/Dashboard/Ranking
 
-#• Definição das métricas (Dimensões)
+# Top 3 meses com maior uso médio de CPU
+top_3_maior_uso <- resumo %>%
+  arrange(desc(media_cpu)) %>%
+  slice(1:3)
 
-#• Definição de Alertas
-#>90% processador <5%
-#>85% memoria
-#>90% usodisco 
-#>rankeando os maiores processos
-#>cpu tempo
-#>hist cpu, 
-#hist ram,
-#processos q mais gastam recursos, 
-#media uso recurso por dia\mês\ano?
-#fazer uma curva linear de previsão de gasto de recurso. 
-#tentar prever perdas conforme documentação. 
-#processos que estão aumentando ou diminuindo seu uso com o tempo? 
-  
+print(top_3_maior_uso)
+
+# Cálculo de correlação entre as principais métricas, por mês
+correlacoes <- ano %>%
+  group_by(mes) %>%
+  summarise(cor_cpu_ram   = cor(uso_cpu_total_., uso_ram_total_., use = "complete.obs"),
+            cor_cpu_disco = cor(uso_cpu_total_., uso_disco_total_., use = "complete.obs"),
+            cor_cpu_ociosa = cor(uso_cpu_total_., tempo_cpu_ociosa, use = "complete.obs"))
+
+print(correlacoes)
+
+# Médias mensais de várias métricas para identificar gargalos simultâneos
+resumo_multivariado <- ano %>%
+  group_by(mes) %>%
+  summarise(cpu = mean(uso_cpu_total_., na.rm = TRUE),
+            ram = mean(uso_ram_total_., na.rm = TRUE),
+            disco = mean(uso_disco_total_., na.rm = TRUE),
+            throughput = mean(disco_throughput_mbs, na.rm = TRUE))
+
+# Gráfico comparativo
+
+
+resumo_melt <- melt(resumo_multivariado, id.vars = "mes")
+
+ggplot(resumo_melt, aes(x = mes, y = value, color = variable, group = variable)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  labs(title = "Comparação das Métricas de Carga do Sistema por Mês",
+       x = "Mês", y = "Média",
+       color = "Métrica") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+resumo_indice <- ano %>%
+  group_by(mes) %>%
+  summarise(cpu = mean(uso_cpu_total_., na.rm = TRUE),
+            ram = mean(uso_ram_total_., na.rm = TRUE),
+            disco = mean(uso_disco_total_., na.rm = TRUE),
+            io = mean(disco_read_count + disco_write_count, na.rm = TRUE),
+            throughput = mean(disco_throughput_mbs, na.rm = TRUE)) %>%
+  mutate(indice_carga = rescale(cpu) + rescale(ram) + rescale(disco) +
+           rescale(io) + rescale(throughput))
+
+
+
