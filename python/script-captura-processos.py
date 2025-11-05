@@ -14,6 +14,7 @@ fuso_horario_brasil = pytz.timezone('America/Sao_Paulo')
 username = os.environ.get('USER') or getpass.getuser()  # Linux
 
 MacAdress = get_mac()
+nucleo=psutil.cpu_percent(percpu=True)
   
  
 def pegar_processos_novo():
@@ -26,7 +27,8 @@ def pegar_processos_novo():
         try:  
             mem = proc.memory_percent()
             tempos_cpu = proc.cpu_times() 
-            total_cpu = tempos_cpu.user + tempos_cpu.system
+            # total_cpu = tempos_cpu.user + tempos_cpu.system
+            total_cpu= proc.cpu_percent(interval=0.1)
 
             processos.append({ 
                 "nome": proc.info["name"],
