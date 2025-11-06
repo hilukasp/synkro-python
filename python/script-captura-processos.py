@@ -17,23 +17,20 @@ MacAdress = get_mac()
 nucleo=psutil.cpu_percent(percpu=True)
   
  
-def pegar_processos_novo():
-    linhas = []
-    ts = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-    
+def pegar_processos_comeco():
     processos = []
     #agrupa por nome
     for proc in psutil.process_iter(["name"]):
         try:  
             mem = proc.memory_percent()
             tempos_cpu = proc.cpu_times() 
-            # total_cpu = tempos_cpu.user + tempos_cpu.system
-            total_cpu= proc.cpu_percent(interval=0.1)
+            total_cpu = tempos_cpu.user + tempos_cpu.system
+            # total_cpu= proc.cpu_percent(interval=0.1)
 
             processos.append({ 
+                "obj": proc, 
                 "nome": proc.info["name"],
-                # "usuario": proc.info["username"],
-                "cpu_%": round(total_cpu, 2),
+                "cpu_%": round(total_cpu, 2), 
                 "mem_%": round(mem, 2)
             })  
              
@@ -49,6 +46,28 @@ def pegar_processos_novo():
     # processos[inicio:fim]
     top_processos = processos[:col_n]
 
+    return top_processos
+
+    
+
+def capturarprocesso(top_processos):  
+    col_n = 10
+    linhas = []
+    ts = datetime.now().strftime("%d-%m-%Y %H:%M:%S") 
+    
+    for proc_info in top_processos: 
+        proc = proc_info["obj"]  
+   
+        try:
+            cpu = proc.cpu_percent(interval=0.1)
+            mem=proc.memory_percent()
+
+            proc.info["name"]
+            proc_info["cpu_%"] = round(cpu, 2)
+            proc_info["mem_%"] = round(mem, 2)
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            proc_info["cpu_%"] = 0.0
+
     #cria colunas
     colunas = ["timestamp","macAdress","Identificação-Mainframe"]
     #for de 1 até 10'
@@ -58,16 +77,20 @@ def pegar_processos_novo():
         # colunas.append(f"usuario{i}")
         colunas.append(f"cpu_%{i}")
         colunas.append(f"mem_%{i}")
+    print(colunas)
     
     #cria linhas
     linha = [ts,MacAdress,username]
     for proc in top_processos:
+        print(proc["nome"])
+        print(proc["cpu_%"])
         # linha.append(proc["pid"])
         linha.append(proc["nome"])
         # linha.append(proc["usuario"])
         linha.append(proc["cpu_%"])
         linha.append(proc["mem_%"])
 
+    print(linha)
     linhas.append(linha)
 
     processo = "processos.csv"
@@ -80,12 +103,11 @@ def pegar_processos_novo():
             colunas += [ f"nome{i}", f"cpu_%{i}", f"mem_%{i}"]
         pd.DataFrame(columns=colunas).to_csv(processo, index=False, encoding="utf-8", sep=";")
     
-
+    
     df = pd.DataFrame(linhas, columns=colunas)
     df.to_csv(processo, index=False, encoding="utf-8",sep=";",mode='a',header=False )
     print(df)
 
- 
 
 def carregamento():
     for i in range(1, 101):
@@ -98,6 +120,8 @@ print(f"HORÁRIO AGORA = {datetime.now().strftime('%d/%m/%Y %H:%M')}")
 print(pyfiglet.figlet_format("INICIANDO..."))
 carregamento()
 
-
+top_processos=[]
+top_processos=pegar_processos_comeco()
 while True: 
-    pegar_processos_novo() 
+        print(top_processos)
+        capturarprocesso(top_processos)
