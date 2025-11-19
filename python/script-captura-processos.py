@@ -8,6 +8,8 @@ import os
 from uuid import getnode as get_mac
 import getpass
 import pandas as pd 
+from collections import defaultdict
+
 
 # Definir o fuso horário do Brasil
 fuso_horario_brasil = pytz.timezone('America/Sao_Paulo')
@@ -24,21 +26,21 @@ def pegar_processos_comeco():
         try:  
             mem = proc.memory_percent()
             tempos_cpu = proc.cpu_times() 
-            total_cpu = tempos_cpu.user + tempos_cpu.system
-            # total_cpu= proc.cpu_percent(interval=0.1)
+            #total_cpu = tempos_cpu.user + tempos_cpu.system
+            total_cpu= proc.cpu_percent(interval=0.1)
 
             processos.append({ 
                 "obj": proc, 
                 "nome": proc.info["name"],
-                "cpu_%": round(total_cpu, 2), 
-                "mem_%": round(mem, 2)
+                "cpu_perc": round(total_cpu, 2), 
+                "mem_perc": round(mem, 2)
             })  
              
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
 
     #ordena pelo uso de memória descrescente
-    processos.sort(key=lambda x: x["cpu_%"], reverse=True)
+    processos.sort(key=lambda x: x["mem_perc"], reverse=True)
 
     col_n = 10
     
@@ -63,10 +65,11 @@ def capturarprocesso(top_processos):
             mem=proc.memory_percent()
 
             proc.info["name"]
-            proc_info["cpu_%"] = round(cpu, 2)
-            proc_info["mem_%"] = round(mem, 2)
+            proc_info["cpu_perc"] = round(cpu, 2)
+            proc_info["mem_perc"] = round(mem, 2)
         except (psutil.NoSuchProcess, psutil.AccessDenied):
-            proc_info["cpu_%"] = 0.0
+            proc_info["cpu_perc"] = 0.0
+            print("erro")
 
     #cria colunas
     colunas = ["timestamp","macAdress","Identificação-Mainframe"]
@@ -75,22 +78,18 @@ def capturarprocesso(top_processos):
         # colunas.append(f"pid{i}")
         colunas.append(f"nome{i}")
         # colunas.append(f"usuario{i}")
-        colunas.append(f"cpu_%{i}")
-        colunas.append(f"mem_%{i}")
-    print(colunas)
+        colunas.append(f"cpu_perc{i}")
+        colunas.append(f"mem_perc{i}")
     
     #cria linhas
     linha = [ts,MacAdress,username]
-    for proc in top_processos:
-        print(proc["nome"])
-        print(proc["cpu_%"])
+    for proc in top_processos: 
         # linha.append(proc["pid"])
         linha.append(proc["nome"])
         # linha.append(proc["usuario"])
-        linha.append(proc["cpu_%"])
-        linha.append(proc["mem_%"])
+        linha.append(proc["cpu_perc"])
+        linha.append(proc["mem_perc"])
 
-    print(linha)
     linhas.append(linha)
 
     processo = "processos.csv"
@@ -100,13 +99,13 @@ def capturarprocesso(top_processos):
         colunas = ["timestamp", "macAdress", "Identificação-Mainframe"]
         col_n = 10
         for i in range(1, col_n + 1):
-            colunas += [ f"nome{i}", f"cpu_%{i}", f"mem_%{i}"]
+            colunas += [ f"nome{i}", f"cpu_perc{i}", f"mem_perc{i}"]
         pd.DataFrame(columns=colunas).to_csv(processo, index=False, encoding="utf-8", sep=";")
     
     
     df = pd.DataFrame(linhas, columns=colunas)
     df.to_csv(processo, index=False, encoding="utf-8",sep=";",mode='a',header=False )
-    print(df)
+ 
 
 
 def carregamento():
@@ -122,6 +121,5 @@ carregamento()
 
 top_processos=[]
 top_processos=pegar_processos_comeco()
-while True: 
-        print(top_processos)
+while True:  
         capturarprocesso(top_processos)
