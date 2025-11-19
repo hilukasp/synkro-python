@@ -2,7 +2,7 @@ import psutil
 import asyncio
 import time
 from datetime import datetime
-import pytz  # ajusta fuso horário
+import pytz
 import pyfiglet
 import sys
 import os
@@ -10,13 +10,17 @@ from uuid import getnode as get_mac
 import getpass
 import pandas as pd
 import platform
-#import boto3 
-#from io import StringIO
+import boto3
+from io import StringIO
 
-# Definir o fuso horário do Brasil
+# ****************** CONFIG S3 *******************
+bucket_name = "synkro-1"
+prefix = str(get_mac()) + "/"
+s3 = boto3.client("s3")
+# ************************************************
+
 fuso_horario_brasil = pytz.timezone('America/Sao_Paulo')
-username = os.environ.get('USER') or getpass.getuser()  # Linux
-
+username = os.environ.get('USER') or getpass.getuser()
 MacAdress = get_mac()
 
 dados = {
@@ -34,7 +38,6 @@ dados = {
     "disco_read_count": [],
     "disco_write_count": [],
     "disco_latencia_ms": []
-    # "processos": []
 }
 
 def to_mb(x):
@@ -76,99 +79,66 @@ def pegar_iops_e_latencia():
 
 def pegar_dados_cpu():
     cpu_dados = psutil.cpu_times_percent(interval=0.1)
-    cpu_iowait = getattr(cpu_dados, 'iowait', 0.0)  # Linux tem iowait, Windows não
+    cpu_iowait = getattr(cpu_dados, 'iowait', 0.0)
     return [cpu_dados.idle, cpu_dados.user, cpu_dados.system, cpu_iowait]
 
 def uso_disco():
     return psutil.disk_usage('/').percent
 
 async def pegar_processos_novo():
-    linhas = []
     ts = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-    
     processos = []
-    #agrupa por nome
+
     for proc in psutil.process_iter(["name"]):
-        try:  
+        try:
             mem = proc.memory_percent()
-            tempos_cpu = proc.cpu_times() 
+            tempos_cpu = proc.cpu_times()
             total_cpu = tempos_cpu.user + tempos_cpu.system
 
-            processos.append({ 
-                "nome": proc.info["name"], 
+            processos.append({
+                "nome": proc.info["name"],
                 "cpu_%": round(total_cpu, 2),
                 "mem_%": round(mem, 2)
-            })  
-             
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            })
+
+        except Exception:
             continue
 
-    #ordena pelo uso de memória descrescente
     processos.sort(key=lambda x: x["cpu_%"], reverse=True)
+    top_processos = processos[:10]
 
-    col_n = 10
-    
-    #filtra os processos,pega até 10 processos
-    # processos[inicio:fim]
-    top_processos = processos[:col_n]
-
-    #cria colunas
     colunas = ["timestamp","macAdress","Identificação-Mainframe"]
-    #for de 1 até 10'
-    for i in range(1, col_n + 1):
-        # colunas.append(f"pid{i}")
-        colunas.append(f"nome{i}")
-        # colunas.append(f"usuario{i}")
-        colunas.append(f"cpu_%{i}")
-        colunas.append(f"mem_%{i}")
-    
-    #cria linhas
-    linha = [ts,MacAdress,username]
-    for proc in top_processos:
-        # linha.append(proc["pid"])
-        linha.append(proc["nome"])
-        # linha.append(proc["usuario"])
-        linha.append(proc["cpu_%"])
-        linha.append(proc["mem_%"])
+    for i in range(1, 11):
+        colunas += [f"nome{i}", f"cpu_%{i}", f"mem_%{i}"]
 
-    linhas.append(linha)
+    linha = [ts, MacAdress, username]
+    for p in top_processos:
+        linha += [p["nome"], p["cpu_%"], p["mem_%"]]
 
-    processo = "processos.csv"
-    
-    #cria o cabeçalho se o processo não existir
-    if not os.path.exists(processo):
-        colunas = ["timestamp", "macAdress", "Identificação-Mainframe"]
-        col_n = 10
-        for i in range(1, col_n + 1):
-            colunas += [ f"nome{i}", f"cpu_%{i}", f"mem_%{i}"]
-        pd.DataFrame(columns=colunas).to_csv(processo, index=False, encoding="utf-8", sep=";")
-    
+    df_proc = pd.DataFrame([linha], columns=colunas)
+    return df_proc
 
-    df = pd.DataFrame(linhas, columns=colunas)
-    df.to_csv(processo, index=False, encoding="utf-8",sep=";",mode='a',header=False )
-  
 def montar_msg(dado, nomeDado, metrica, limite_barra, numDivisao):
-    calculo_total_barras = int(limite_barra * (dado / numDivisao))
-    return f"{nomeDado} [{'■' * calculo_total_barras}{' ' * (limite_barra - calculo_total_barras)}] {dado}{metrica}"
+    calculo = int(limite_barra * (dado / numDivisao))
+    return f"{nomeDado} [{'■' * calculo}{' ' * (limite_barra - calculo)}] {dado}{metrica}"
 
 def carregamento():
     for i in range(1, 101):
         sys.stdout.write(f"\rCarregando:  {i}%")
         sys.stdout.flush()
         time.sleep(0.05)
-    sys.stdout.write("\n")
-
+    print()
 
 async def rodando():
-    print(f"HORÁRIO AGORA = {datetime.now().strftime('%d/%m/%Y %H:%M')}")
-    print(pyfiglet.figlet_format("INICIANDO..."))
 
+    print(pyfiglet.figlet_format("INICIANDO..."))
     carregamento()
- 
+
     while True:
         horario_agora = datetime.now()
         trata_data = horario_agora.strftime("%d-%m-%Y %H:%M:%S")
 
+        # --- coleta ---
         dados_cpu = pegar_dados_cpu()
         uso_ram_porcentagem = uso_ram()
         swap_rate = pegar_swap_rate()
@@ -176,7 +146,6 @@ async def rodando():
         dados_disco = pegar_iops_e_latencia()
         throughput = pegar_throughput()
         dados_disco.append(throughput)
-        
 
         dados["timestamp"].append(trata_data)
         dados["identificao-mainframe"].append(username)
@@ -190,48 +159,32 @@ async def rodando():
         dados["disco_throughput_mbs"].append(dados_disco[-1])
         dados["disco_read_count"].append(dados_disco[1])
         dados["disco_write_count"].append(dados_disco[2])
-        dados["disco_latencia_ms"].append(dados_disco[3]) 
-
+        dados["disco_latencia_ms"].append(dados_disco[3])
         dados["macAdress"].append(MacAdress)
 
-        print(f"""
-    +------------------------------------------------------------------------------+
+        print(f"\n--- COLETANDO DADOS {trata_data} ---\n")
 
-    !--------IDENTIFICAÇÃO DO MAINFRAME---------!
-        User: {dados["identificao-mainframe"][-1]}
-        Mac Adress: {MacAdress}
-    
-    !---------------DADOS DA CPU----------------!
-        {montar_msg(dados["uso_cpu_total_%"][-1], "Consumo da CPU", "%", 10, 100)}
-        {montar_msg(dados["tempo_cpu_ociosa"][-1], "Tempo de CPU Ociosa", "s", 10, 100)}
-        {montar_msg(dados["cpu_io_wait"][-1], "Tempo de CPU I/O Wait", "s", 10, 100)}
+        # =========================================================
+      
+        df = pd.DataFrame(dados)   # DataFrame mainframe
+        df_proc = await pegar_processos_novo()   # DataFrame processos
 
-    !---------------DADOS DA RAM----------------!
-        {montar_msg(dados["uso_ram_total_%"][-1], "Consumo da RAM", "%", 10, 100)}
-        {montar_msg(dados["swap_rate_mbs"][-1], "Dados indo para memória SWAP", "MB/s", 10, 100)}
+        # Criar buffers CSV em memória
+        csv_buffer_main = StringIO() 
+        csv_buffer_proc = StringIO()
 
-    !---------------DADOS DO DASD---------------!
-        {montar_msg(dados["uso_disco_total_%"][-1], "Consumo do DASD", "%", 10, 100)}
-        {montar_msg(dados["disco_throughput_mbs"][-1], "Throughput do DASD", "MB/s", 10, 100)}
-        {montar_msg(dados["disco_iops_total"][-1], "IOPS no Disco", "qtd", 10, 100)}
-        {montar_msg(dados["disco_read_count"][-1], "Dados lidos no DASD", "qtd", 10, 100)}
-        {montar_msg(dados["disco_write_count"][-1], "Dados escritos no DASD", "qtd", 10, 100)}
-        {montar_msg(dados["disco_latencia_ms"][-1], "Latência do DASD", "ms", 10, 1000)}
-    """)
-        await pegar_processos_novo()
+        df.to_csv(csv_buffer_main, index=False, sep=";")
+        df_proc.to_csv(csv_buffer_proc, index=False, sep=";")
 
-        df = pd.DataFrame(dados)
-        df.to_csv("dados-mainframe2.csv", encoding="utf-8", sep=";", index=False)
-        
-    
-    #comando AWS
-    # csv_buffer = StringIO() #dependencia, em vez do csv carregar na máquina ele armazena temporariamente na pasta do projeto
-    # df.to_csv(csv_buffer, index=False)
+        # nomes
+        nome_main = f"{prefix}dados-mainframe.csv"
+        nome_proc = f"{prefix}processos.csv"
 
-    # s3 = boto3.client('s3') #importa o s3
-    # s3.put_object( #coloca o arquivo
-    #     Bucket='nome-do-bucket',
-    #     Key='arquivo.csv',  # caminho dentro do bucket
-    #     Body=csv_buffer.getvalue()
-    # )
+        # Upload direto
+        s3.put_object(Bucket=bucket_name, Key=nome_main, Body=csv_buffer_main.getvalue())
+        s3.put_object(Bucket=bucket_name, Key=nome_proc, Body=csv_buffer_proc.getvalue())
+
+        print("Dados enviados ao S3")
+
+# 
 asyncio.run(rodando())
