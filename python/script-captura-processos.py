@@ -19,7 +19,7 @@ nucleo = psutil.cpu_percent(percpu=True)
 listar = {
     "System Idle Process", "Code.exe", "Taskmgr.exe", "chrome.exe",
     "svchost.exe", "Notion.exe", "mysqld.exe", "explorer.exe",
-    "MsMpEng.exe", "AMDRSServ.exe", 
+    "MsMpEng.exe", "AMDRSServ.exe", "System"
 }
 
 
