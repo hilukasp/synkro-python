@@ -16,19 +16,20 @@ username = os.environ.get('USER') or getpass.getuser()
 MacAdress = get_mac()
 nucleo = psutil.cpu_percent(percpu=True)
 
+#lista os processos comum
 listar = {
-    "System Idle Process", "Code.exe", "Taskmgr.exe", "chrome.exe",
-    "svchost.exe", "Notion.exe", "mysqld.exe", "explorer.exe",
+    "Code.exe", "Taskmgr.exe", "chrome.exe",
+    "svchost.exe", "python.exe", "mysqld.exe", "explorer.exe",
     "MsMpEng.exe", "AMDRSServ.exe", "System"
 }
 
-
+#captura os processos
 def capturarprocesso(listar):
     grupos = {}
     linhas = []
     ts = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
- 
-    cpu_total = psutil.cpu_percent(interval=0.5)
+    cpu_total=0.0
+   
     ram_total = psutil.virtual_memory().percent
 
     for proc in psutil.process_iter(["name"]):
@@ -49,8 +50,14 @@ def capturarprocesso(listar):
         grupos[nome]["cpu"] += cpu
         grupos[nome]["mem"] += mem
 
+    for nome in grupos:
+        grupos[nome]["cpu"] *= 3.5
+        cpu_total+=grupos[nome]["cpu"]
+
+
+    #cria colunas 
     col_n = 10
-    linha = [ts, MacAdress, username, cpu_total, ram_total]
+    linha = [ts, MacAdress, username, cpu_total,ram_total]
 
     processos_final = list(grupos.items())[:col_n]
 
@@ -67,13 +74,14 @@ def capturarprocesso(listar):
 
     processo = "processos.csv"
 
-    # Criar CSV se não existir (incluindo CPU e RAM total)
+    # Criar CSV se não existir
     if not os.path.exists(processo):
         colunas = ["timestamp", "macAdress", "Identificação-Mainframe", "cpu_total", "ram_total"]
         for i in range(1, col_n + 1):
             colunas += [f"nome{i}", f"cpu_perc{i}", f"mem_perc{i}"]
         pd.DataFrame(columns=colunas).to_csv(processo, index=False, sep=";")
 
+    #importando csv
     colunas = ["timestamp", "macAdress", "Identificação-Mainframe", "cpu_total", "ram_total"]
     for i in range(1, col_n + 1):
         colunas += [f"nome{i}", f"cpu_perc{i}", f"mem_perc{i}"]
