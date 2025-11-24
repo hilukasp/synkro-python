@@ -13,10 +13,15 @@ import platform
 import boto3
 from io import StringIO
 
+
+
 # ****************** CONFIG S3 *******************
-bucket_name = "synkro-1"
-prefix = str(get_mac()) + "/"
-s3 = boto3.client("s3")
+horario_agora = datetime.now()
+trata_data = horario_agora.strftime("%d%m%Y")
+empresa = 1 
+bucket_name = "synkro-raw-1"
+prefix = str(empresa)+"/"+ str(get_mac()) + "/" + str(trata_data) + "/"
+s3 = boto3.client("s3", region_name="us-east-1")
 # ************************************************
 
 fuso_horario_brasil = pytz.timezone('America/Sao_Paulo')
