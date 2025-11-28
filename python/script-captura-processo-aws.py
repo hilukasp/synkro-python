@@ -8,7 +8,16 @@ import os
 from uuid import getnode as get_mac
 import getpass
 import pandas as pd
-
+import boto3 
+from io import StringIO
+# ****************** CONFIG S3 *******************
+horario_agora = datetime.now()
+trata_data = horario_agora.strftime("%d%m%Y")
+empresa = 1 
+bucket_name = "synkro-raw-1"
+prefix = str(empresa)+"/"+ str(get_mac()) + "/" + str(trata_data) + "/"
+s3 = boto3.client("s3", region_name="us-east-1")
+# ************************************************
 
 # Definir o fuso horário do Brasil
 fuso_horario_brasil = pytz.timezone('America/Sao_Paulo')
@@ -107,4 +116,20 @@ print(pyfiglet.figlet_format("INICIANDO..."))
 carregamento()
 
 while True:
-    capturarprocesso(listar)
+    df_proc=capturarprocesso(listar)
+    #aws
+# =========================================================
+      
+
+    # Criar buffers CSV em memória 
+    csv_buffer_proc = StringIO()
+ 
+    df_proc.to_csv(csv_buffer_proc, index=False, sep=";")
+
+    # nomes 
+    nome_proc = f"{prefix}processos.csv"
+
+    # Upload direto 
+    s3.put_object(Bucket=bucket_name, Key=nome_proc, Body=csv_buffer_proc.getvalue())
+
+    print("Dados enviados ao S3")
