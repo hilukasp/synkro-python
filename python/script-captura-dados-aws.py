@@ -16,7 +16,7 @@ from io import StringIO
 horario_agora = datetime.now()
 trata_data = horario_agora.strftime("%d%m%Y")
 empresa = 1 
-bucket_name = "synkro-raw-1"
+bucket_name = "synkro-raw"
 prefix = str(empresa)+"/"+ str(get_mac()) + "/" + str(trata_data) + "/"
 s3 = boto3.client("s3", region_name="us-east-1")
 # ************************************************

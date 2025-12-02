@@ -107,4 +107,4 @@ print(pyfiglet.figlet_format("INICIANDO..."))
 carregamento()
 
 while True:
-    capturarprocesso(listar)
+    capturarprocesso(listar) 

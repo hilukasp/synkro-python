@@ -14,7 +14,7 @@ from io import StringIO
 horario_agora = datetime.now()
 trata_data = horario_agora.strftime("%d%m%Y")
 empresa = 1 
-bucket_name = "synkro-raw-1"
+bucket_name = "synkro-raw"
 prefix = str(empresa)+"/"+ str(get_mac()) + "/" + str(trata_data) + "/"
 s3 = boto3.client("s3", region_name="us-east-1")
 # ************************************************
@@ -101,6 +101,7 @@ def capturarprocesso(listar):
 
     df = pd.DataFrame(linhas, columns=colunas)
     df.to_csv(processo, index=False, sep=";", mode='a', header=False)
+    return df
 
 
 def carregamento():
@@ -116,10 +117,12 @@ print(pyfiglet.figlet_format("INICIANDO..."))
 carregamento()
 
 while True:
-    df_proc=capturarprocesso(listar)
+    capturarprocesso(listar)
+    
     #aws
-# =========================================================
+    # =========================================================
       
+    df_proc = pd.read_csv("processos.csv", sep=";")
 
     # Criar buffers CSV em memória 
     csv_buffer_proc = StringIO()
