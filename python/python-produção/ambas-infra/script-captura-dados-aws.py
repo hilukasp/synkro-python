@@ -9,15 +9,18 @@ from uuid import getnode as get_mac
 import getpass
 import pandas as pd
 import platform
-import boto3 
+import boto3
 from io import StringIO
+import requests
 
 # ****************** CONFIG S3 *******************
 horario_agora = datetime.now()
 trata_data = horario_agora.strftime("%d%m%Y")
-empresa = 1 
+empresa = 1
 bucket_name = "synkro-raw"
 prefix = str(empresa)+"/"+ str(get_mac()) + "/" + str(trata_data) + "/"
+
+# Configura S3 usando role da EC2
 s3 = boto3.client("s3", region_name="us-east-1")
 # ************************************************
 
@@ -97,27 +100,24 @@ def pegar_processos():
 
     for proc in psutil.process_iter(attrs=["pid", "name", "cpu_percent", "memory_percent", "username"]):
         try:
-             
             usuario_proc = proc.info.get('username')
             if not usuario_proc:
                 continue
 
-            # Linux: username já é só o usuário
             if platform.system() == "Windows":
                 usuario_proc = usuario_proc.split("\\")[-1]
 
             if usuario_proc != usuario_atual:
-                
                 continue
 
             cpu = proc.cpu_percent(interval=0.0)
             mem = proc.memory_percent()
-            if cpu <= 1.0 and mem <= 1.0:#se for menor que 0.01%
+            if cpu <= 1.0 and mem <= 1.0:
                 continue
             
             nome = proc.info['name']
- 
-            if nome not in agrupado: #agrupa os processos de mesmo nome
+
+            if nome not in agrupado:
                 agrupado[nome] = {
                     "pid": proc.info["pid"],
                     "nome": nome,
@@ -132,13 +132,13 @@ def pegar_processos():
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
         
-        for dados in agrupado.values(): #adiciona os valores agrupados na lista
+        for dados_proc in agrupado.values():
             processos_usuario.append({
-                "pid": dados["pid"],
-                "nome": dados["nome"],
-                "usuario": dados["usuario"],
-                "cpu_%": round(dados["cpu_%"], 2),
-                "Mem_%": round(dados["mem_%"], 2)
+                "pid": dados_proc["pid"],
+                "nome": dados_proc["nome"],
+                "usuario": dados_proc["usuario"],
+                "cpu_%": round(dados_proc["cpu_%"], 2),
+                "Mem_%": round(dados_proc["mem_%"], 2)
             })
     
     return processos_usuario
@@ -170,9 +170,6 @@ while True:
     throughput = pegar_throughput()
     dados_disco.append(throughput)
     
-    # user_processos = pegar_processos()
-    #user_processos = pegar_processos_top10()
-
     dados["timestamp"].append(trata_data)
     dados["identificao-mainframe"].append(username)
     dados["uso_cpu_total_%"].append(dados_cpu[2])
@@ -186,7 +183,6 @@ while True:
     dados["disco_read_count"].append(dados_disco[1])
     dados["disco_write_count"].append(dados_disco[2])
     dados["disco_latencia_ms"].append(dados_disco[3])
-    # dados["processos"].append(user_processos)
     
     dados["macAdress"].append(MacAdress)
 
@@ -215,23 +211,25 @@ while True:
     {montar_msg(dados["disco_latencia_ms"][-1], "Latência do DASD", "ms", 10, 1000)}
 """)
 
-    #df = pd.DataFrame(dados) 
-    
-    #comando AWS 
-    # =========================================================
-    
-    df = pd.DataFrame(dados)   # DataFrame mainframe 
+    # Criar DataFrame e CSV em memória
+    df = pd.DataFrame(dados)
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False, sep=";", encoding="utf-8")
 
-    # Criar buffers CSV em memória
-    csv_buffer_main = StringIO()  
+  
 
-    df.to_csv(csv_buffer_main, index=False, sep=";") 
+    # Enviar via HTTP POST
+    csv_buffer.seek(0) 
+    url = "http://54.90.186.23:5000/upload"
+    url2 = "http://44.195.183.193:5000/upload"
 
-    # nomes
-    nome_main = f"{prefix}dados-mainframe.csv" 
-    # Upload direto
-    s3.put_object(Bucket=bucket_name, Key=nome_main, Body=csv_buffer_main.getvalue()) 
+    # Incluindo a estrutura de pastas no nome do arquivo
+    nome_arquivo_s3 = f"{prefix}dados-mainframe.csv"
+    files = {"file": (nome_arquivo_s3, csv_buffer)}
 
-    print("Dados enviados ao S3")
+    r = requests.post(url, files=files)
+    r = requests.post(url2, files=files)
+    print(r.text)
+    print("Dados enviados ao S3 com role da EC2 em ambas infras")
 
-# 
+    time.sleep(5)  # intervalo entre envios

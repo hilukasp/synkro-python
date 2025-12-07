@@ -10,6 +10,8 @@ import getpass
 import pandas as pd
 import boto3 
 from io import StringIO
+import requests
+
 # ****************** CONFIG S3 *******************
 horario_agora = datetime.now()
 trata_data = horario_agora.strftime("%d%m%Y")
@@ -118,6 +120,9 @@ carregamento()
 
 while True:
     capturarprocesso(listar)
+
+
+
     
     #aws
     # =========================================================
@@ -129,10 +134,19 @@ while True:
  
     df_proc.to_csv(csv_buffer_proc, index=False, sep=";")
 
-    # nomes 
-    nome_proc = f"{prefix}processos.csv"
 
-    # Upload direto 
-    s3.put_object(Bucket=bucket_name, Key=nome_proc, Body=csv_buffer_proc.getvalue())
 
+
+     # Enviar via HTTP POST
+    csv_buffer_proc.seek(0) 
+    url = "http://44.195.183.193:5000/upload"
+
+    # Incluindo a estrutura de pastas no nome do arquivo
+    nome_arquivo_s3 = f"{prefix}processos.csv"
+    files = {"file": (nome_arquivo_s3, csv_buffer_proc)}
+
+    r = requests.post(url, files=files)
+    print(r.text)
+    print("Dados enviados ao S3 com role da EC2")
     print("Dados enviados ao S3")
+    time.sleep(5)  # intervalo entre envios

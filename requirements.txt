@@ -2,3 +2,4 @@ pandas
 psutil
 pytz
 pyfiglet
+boto3
